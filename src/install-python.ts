@@ -2,8 +2,9 @@ import * as path from 'path';
 import * as core from '@actions/core';
 import * as tc from '@actions/tool-cache';
 import * as exec from '@actions/exec';
-import {ExecOptions} from '@actions/exec/lib/interfaces';
-import {IS_WINDOWS, IS_LINUX} from './utils';
+import { ExecOptions } from '@actions/exec/lib/interfaces';
+import { IS_WINDOWS, IS_LINUX } from './utils';
+import * as httpm from '@actions/http-client';
 
 const TOKEN = core.getInput('token');
 const AUTH = !TOKEN ? undefined : `token ${TOKEN}`;
@@ -31,24 +32,39 @@ export async function findReleaseFromManifest(
   return foundRelease;
 }
 
-export function getManifest(): Promise<tc.IToolRelease[]> {
+export async function getManifest(): Promise<tc.IToolRelease[]> {
   core.debug(
     `Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`
   );
-  return tc.getManifestFromRepo(
-    MANIFEST_REPO_OWNER,
-    MANIFEST_REPO_NAME,
-    AUTH,
-    MANIFEST_REPO_BRANCH
-  );
-}
+  try {
+    const manifest = await tc.getManifestFromRepo(
+      MANIFEST_REPO_OWNER,
+      MANIFEST_REPO_NAME,
+      AUTH,
+      MANIFEST_REPO_BRANCH
+    );
+    return manifest;
+  } catch (err) {
+    core.debug(err as string);
+  }
 
+  // If we getManifestFromRepo fails (might be due to API-rate limit)
+  // we fallback to fetching the manifest from the raw URL.
+  core.debug("Fetching via the API failed. Fetching using raw URL.");
+
+  const http: httpm.HttpClient = new httpm.HttpClient('tool-cache');
+  const response = await http.getJson<tc.IToolRelease[]>(MANIFEST_URL)
+  if (!response.result) {
+    throw new Error(`Unable to get manifest from ${MANIFEST_URL}`);
+  }
+  return response.result;
+}
 async function installPython(workingDirectory: string) {
   const options: ExecOptions = {
     cwd: workingDirectory,
     env: {
       ...process.env,
-      ...(IS_LINUX && {LD_LIBRARY_PATH: path.join(workingDirectory, 'lib')})
+      ...(IS_LINUX && { LD_LIBRARY_PATH: path.join(workingDirectory, 'lib') })
     },
     silent: true,
     listeners: {
