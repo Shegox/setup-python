@@ -70171,8 +70171,23 @@ function findReleaseFromManifest(semanticVersionSpec, architecture, manifest) {
 }
 exports.findReleaseFromManifest = findReleaseFromManifest;
 function getManifest() {
-    core.debug(`Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`);
-    return tc.getManifestFromRepo(MANIFEST_REPO_OWNER, MANIFEST_REPO_NAME, AUTH, MANIFEST_REPO_BRANCH);
+    return __awaiter(this, void 0, void 0, function* () {
+        core.debug(`Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`);
+        try {
+            const manifest = tc.getManifestFromRepo(MANIFEST_REPO_OWNER, MANIFEST_REPO_NAME, AUTH, MANIFEST_REPO_BRANCH);
+            return manifest;
+        }
+        catch (err) {
+            core.debug(err);
+        }
+        // perform a request to get the manifest
+        const res = yield fetch(exports.MANIFEST_URL);
+        if (!res.ok) {
+            throw new Error(`Failed to get manifest from ${exports.MANIFEST_URL}`);
+        }
+        const manifest = yield res.json();
+        return manifest;
+    });
 }
 exports.getManifest = getManifest;
 function installPython(workingDirectory) {
