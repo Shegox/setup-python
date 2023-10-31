@@ -70186,8 +70186,11 @@ function getManifest() {
         core.error("Fetching directly");
         const http = new httpm.HttpClient('tool-cache');
         const response = yield http.getJson(exports.MANIFEST_URL);
-        core.error(JSON.stringify(response));
-        return response;
+        if (response.statusCode === 200 && response.result) {
+            core.error(JSON.stringify(response));
+            return response.result;
+        }
+        throw new Error(`Unable to get manifest from ${exports.MANIFEST_URL}`);
     });
 }
 exports.getManifest = getManifest;
