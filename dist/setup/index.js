@@ -70154,6 +70154,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
 const utils_1 = __nccwpck_require__(1314);
+const httpm = __importStar(__nccwpck_require__(9925));
 const TOKEN = core.getInput('token');
 const AUTH = !TOKEN ? undefined : `token ${TOKEN}`;
 const MANIFEST_REPO_OWNER = 'actions';
@@ -70183,12 +70184,9 @@ function getManifest() {
         }
         // perform a request to get the manifest
         core.error("Fetching directly");
-        const res = yield fetch(exports.MANIFEST_URL);
-        if (!res.ok) {
-            throw new Error(`Failed to get manifest from ${exports.MANIFEST_URL}`);
-        }
-        const manifest = yield res.json();
-        return manifest;
+        const http = new httpm.HttpClient('tool-cache');
+        const response = yield http.getJson(exports.MANIFEST_URL);
+        return response;
     });
 }
 exports.getManifest = getManifest;
