@@ -70186,7 +70186,7 @@ function getManifest() {
         core.error("Fetching directly");
         const http = new httpm.HttpClient('tool-cache');
         const response = yield http.getJson(exports.MANIFEST_URL);
-        core.error(response.toString());
+        core.error(JSON.stringify(response));
         return response;
     });
 }
