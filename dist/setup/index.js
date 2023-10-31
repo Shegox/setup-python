@@ -70173,14 +70173,16 @@ exports.findReleaseFromManifest = findReleaseFromManifest;
 function getManifest() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`);
+        core.error("Downloading Manifest");
         try {
             const manifest = tc.getManifestFromRepo(MANIFEST_REPO_OWNER, MANIFEST_REPO_NAME, AUTH, MANIFEST_REPO_BRANCH);
             return manifest;
         }
         catch (err) {
-            core.debug(err);
+            core.error(err);
         }
         // perform a request to get the manifest
+        core.error("Fetching directly");
         const res = yield fetch(exports.MANIFEST_URL);
         if (!res.ok) {
             throw new Error(`Failed to get manifest from ${exports.MANIFEST_URL}`);
