@@ -70174,7 +70174,6 @@ exports.findReleaseFromManifest = findReleaseFromManifest;
 function getManifest() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`);
-        core.error("Downloading Manifest");
         try {
             const manifest = yield tc.getManifestFromRepo(MANIFEST_REPO_OWNER, MANIFEST_REPO_NAME, AUTH, MANIFEST_REPO_BRANCH);
             return manifest;
@@ -70182,12 +70181,12 @@ function getManifest() {
         catch (err) {
             core.error(err);
         }
-        // perform a request to get the manifest
-        core.error("Fetching directly");
+        // If we getManifestFromRepo fails (might be due to API-rate limit)
+        // we fallback to fetching the manifest from the raw URL.
+        core.debug("Fetching via the API failed. Fetching using raw URL.");
         const http = new httpm.HttpClient('tool-cache');
         const response = yield http.getJson(exports.MANIFEST_URL);
         if (response.statusCode === 200 && response.result) {
-            core.error(JSON.stringify(response));
             return response.result;
         }
         throw new Error(`Unable to get manifest from ${exports.MANIFEST_URL}`);
