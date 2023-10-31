@@ -70179,17 +70179,17 @@ function getManifest() {
             return manifest;
         }
         catch (err) {
-            core.error(err);
+            core.debug(err);
         }
         // If we getManifestFromRepo fails (might be due to API-rate limit)
         // we fallback to fetching the manifest from the raw URL.
         core.debug("Fetching via the API failed. Fetching using raw URL.");
         const http = new httpm.HttpClient('tool-cache');
         const response = yield http.getJson(exports.MANIFEST_URL);
-        if (response.statusCode === 200 && response.result) {
-            return response.result;
+        if (!response.result) {
+            throw new Error(`Unable to get manifest from ${exports.MANIFEST_URL}`);
         }
-        throw new Error(`Unable to get manifest from ${exports.MANIFEST_URL}`);
+        return response.result;
     });
 }
 exports.getManifest = getManifest;
